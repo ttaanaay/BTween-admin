@@ -783,7 +783,9 @@ function renderReports() {
             ${currentReportStatus === "PENDING" ? `
               <td>
                 <div class="cell-actions">
-                  <button class="btn-success btn-sm" onclick="resolveReport(${r.id})">Resolve</button>
+                  <button class="btn-ghost btn-sm" onclick="resolveReport(${r.id})">Resolve</button>
+                  ${r.targetType !== "USER" ? `<button class="btn-danger btn-sm" onclick="deleteReportContent(${r.id})">Delete</button>` : ``}
+                  <button class="btn-danger btn-sm" onclick="banReportTarget(${r.id})">Ban</button>
                   <button class="btn-ghost btn-sm" onclick="dismissReport(${r.id})">Dismiss</button>
                 </div>
               </td>` : ``}
@@ -806,6 +808,24 @@ async function dismissReport(id) {
     await api(`admin/reports/${id}/dismiss`, { method: "POST" });
     toast("Dismissed");
     loadReports();
+  } catch (e) { toast(e.message); }
+}
+async function deleteReportContent(id) {
+  if (!confirm("Delete the reported quote/comment permanently? This also marks the report resolved.")) return;
+  try {
+    await api(`admin/reports/${id}/delete-content`, { method: "POST" });
+    toast("Content deleted");
+    loadReports();
+    loadStats();
+  } catch (e) { toast(e.message); }
+}
+async function banReportTarget(id) {
+  if (!confirm("Ban the account responsible for this? This also marks the report resolved.")) return;
+  try {
+    await api(`admin/reports/${id}/ban-target`, { method: "POST" });
+    toast("User banned");
+    loadReports();
+    loadUsers();
   } catch (e) { toast(e.message); }
 }
 
