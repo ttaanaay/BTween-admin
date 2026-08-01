@@ -219,6 +219,34 @@
 
   .loading { text-align: center; padding: 40px; color: var(--text-dim); font-size: 13px; }
 
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 40px 20px; overflow-y: auto; z-index: 50;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    width: 100%; max-width: 560px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px;
+  }
+  .modal-box .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .modal-box h2 { font-size: 19px; font-weight: 500; margin: 0 0 4px; }
+  .modal-close { background: transparent; color: var(--text-dim); font-size: 20px; padding: 4px 8px; }
+  .modal-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin: 20px 0 8px; }
+  .modal-list-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .modal-list-item:last-child { border-bottom: none; }
+
+  /* ---------- Analytics ---------- */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .chart-card h3 { font-size: 14px; font-weight: 500; margin: 0 0 16px; color: var(--text-dim); }
+  .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 100px; }
+  .chart-bar { flex: 1; background: var(--accent-dim); border-radius: 2px 2px 0 0; min-height: 2px; position: relative; }
+  .chart-bar:hover { background: var(--accent); }
+  .chart-totals { display: flex; gap: 24px; margin-top: 12px; font-size: 12px; color: var(--text-dim); }
+  .chart-totals b { color: var(--text); font-family: 'Fraunces', serif; font-size: 16px; display: block; }
+
   @media (max-width: 800px) {
     .shell { flex-direction: column; }
     .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 12px; align-items: center; }
@@ -259,6 +287,7 @@
       <div class="nav-item" data-page="users">Users</div>
       <div class="nav-item" data-page="quotes">Pending quotes<span class="badge" id="badge-quotes">0</span></div>
       <div class="nav-item" data-page="reports">Reports<span class="badge" id="badge-reports">0</span></div>
+      <div class="nav-item" data-page="analytics">Analytics</div>
       <div class="nav-item" data-page="settings">Settings</div>
       <div class="sidebar-footer">
         <div class="admin-id" id="admin-email"></div>
@@ -313,6 +342,15 @@
         <div class="panel" id="reports-panel"><div class="loading">Loading reports…</div></div>
       </div>
 
+      <!-- Analytics -->
+      <div class="page" id="page-analytics">
+        <div class="page-header">
+          <div><h1>Analytics</h1><p>Daily activity over the last 30 days.</p></div>
+          <button class="btn-ghost btn-sm" onclick="loadAnalytics()">Refresh</button>
+        </div>
+        <div id="analytics-content"><div class="loading">Loading analytics…</div></div>
+      </div>
+
       <!-- Settings -->
       <div class="page" id="page-settings">
         <div class="page-header">
@@ -332,6 +370,12 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-modal-overlay" onclick="if(event.target===this) closeUserDetail()">
+  <div class="modal-box" id="user-modal-box">
+    <div class="loading">Loading…</div>
   </div>
 </div>
 
@@ -508,6 +552,7 @@ function loadAll() {
   loadQuotes();
   loadReports();
   loadSettings();
+  loadAnalytics();
 }
 
 // ============================================================
@@ -571,6 +616,7 @@ function renderUsers() {
               ${u.isBanned ? `<span class="pill pill-danger">Banned</span>` : `<span class="pill pill-success">Active</span>`}
               ${u.isLocked ? `<span class="pill pill-warn" style="margin-left:4px">Locked</span>` : ``}
               ${u.emailVerified ? `` : `<span class="pill pill-neutral" style="margin-left:4px">Email unverified</span>`}
+              ${u.isAdmin ? `<span class="pill pill-neutral" style="margin-left:4px">Admin</span>` : ``}
             </td>
             <td>
               <label class="switch">
@@ -582,10 +628,14 @@ function renderUsers() {
             <td style="color:var(--text-dim)">${formatDate(u.createdAt)}</td>
             <td>
               <div class="cell-actions">
+                <button class="btn-ghost btn-sm" onclick="openUserDetail(${u.id})">View</button>
                 ${u.isBanned
                   ? `<button class="btn-success btn-sm" onclick="toggleBan(${u.id}, false)">Unban</button>`
                   : `<button class="btn-danger btn-sm" onclick="toggleBan(${u.id}, true)">Ban</button>`}
                 ${u.isLocked ? `<button class="btn-ghost btn-sm" onclick="unlockUser(${u.id})">Unlock</button>` : ``}
+                ${u.isAdmin
+                  ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Demote</button>`
+                  : `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`}
               </div>
             </td>
           </tr>
@@ -711,13 +761,18 @@ function renderReports() {
   }
   panel.innerHTML = `
     <table>
-      <thead><tr><th>Target</th><th>Reason</th><th>Reported by</th><th>When</th>${currentReportStatus === "PENDING" ? "<th></th>" : ""}</tr></thead>
+      <thead><tr><th>Target</th><th>Reported content</th><th>Reason</th><th>Reported by</th><th>When</th>${currentReportStatus === "PENDING" ? "<th></th>" : ""}</tr></thead>
       <tbody>
         ${reportsCache.map(r => `
           <tr>
             <td>
               <span class="pill pill-neutral">${escapeHtml(r.targetType)}</span>
               <span style="color:var(--text-dim);margin-left:6px">#${r.targetId}</span>
+            </td>
+            <td style="max-width:220px">
+              ${r.targetPreview
+                ? `<span style="color:var(--text)">${escapeHtml(r.targetPreview)}</span>`
+                : `<span style="color:var(--text-dim);font-style:italic">content deleted</span>`}
             </td>
             <td>
               <div>${escapeHtml(r.reason)}</div>
@@ -752,6 +807,107 @@ async function dismissReport(id) {
     toast("Dismissed");
     loadReports();
   } catch (e) { toast(e.message); }
+}
+
+async function toggleAdmin(id, makeAdmin) {
+  const verb = makeAdmin ? "give admin access to" : "remove admin access from";
+  if (!confirm(`Are you sure you want to ${verb} this user?`)) return;
+  try {
+    await api(`admin/users/${id}/admin-status`, { method: "PUT", body: JSON.stringify({ isAdmin: makeAdmin }) });
+    toast(makeAdmin ? "Now an admin" : "Admin access removed");
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// User detail modal
+// ============================================================
+async function openUserDetail(id) {
+  const overlay = document.getElementById("user-modal-overlay");
+  const box = document.getElementById("user-modal-box");
+  box.innerHTML = `<div class="loading">Loading…</div>`;
+  overlay.classList.add("show");
+
+  try {
+    const detail = await api(`admin/users/${id}/detail`);
+    const u = detail.user;
+    box.innerHTML = `
+      <div class="modal-header">
+        <div>
+          <h2>${escapeHtml(u.displayName)}</h2>
+          <div style="color:var(--text-dim);font-size:13px">@${escapeHtml(u.username)} · ${escapeHtml(u.email)}</div>
+        </div>
+        <button class="modal-close" onclick="closeUserDetail()">&times;</button>
+      </div>
+
+      <div class="modal-section-title">Recent quotes (${detail.recentQuotes.length})</div>
+      ${detail.recentQuotes.length === 0
+        ? `<div style="color:var(--text-dim);font-size:13px">No quotes yet.</div>`
+        : detail.recentQuotes.map(q => `
+            <div class="modal-list-item">
+              <span class="pill pill-neutral" style="margin-right:6px">${escapeHtml(q.status)}</span>
+              ${escapeHtml(q.text.length > 90 ? q.text.slice(0, 90) + "…" : q.text)}
+            </div>
+          `).join("")}
+
+      <div class="modal-section-title">Recent comments (${detail.recentComments.length})</div>
+      ${detail.recentComments.length === 0
+        ? `<div style="color:var(--text-dim);font-size:13px">No comments yet.</div>`
+        : detail.recentComments.map(c => `
+            <div class="modal-list-item">${escapeHtml(c.text.length > 90 ? c.text.slice(0, 90) + "…" : c.text)}</div>
+          `).join("")}
+    `;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state">Couldn't load user — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function closeUserDetail() {
+  document.getElementById("user-modal-overlay").classList.remove("show");
+}
+
+// ============================================================
+// Analytics
+// ============================================================
+async function loadAnalytics() {
+  const el = document.getElementById("analytics-content");
+  el.innerHTML = `<div class="loading">Loading analytics…</div>`;
+  try {
+    const data = await api("admin/analytics?days=30");
+    renderAnalytics(data.points);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">Couldn't load analytics — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderAnalytics(points) {
+  const el = document.getElementById("analytics-content");
+  const series = [
+    { key: "newUsers", label: "New users" },
+    { key: "newQuotes", label: "New quotes" },
+    { key: "newLikes", label: "New likes" },
+    { key: "newComments", label: "New comments" }
+  ];
+
+  el.innerHTML = series.map(s => {
+    const values = points.map(p => p[s.key]);
+    const max = Math.max(1, ...values);
+    const total = values.reduce((a, b) => a + b, 0);
+    const bars = points.map(p => {
+      const heightPct = Math.max(2, Math.round((p[s.key] / max) * 100));
+      return `<div class="chart-bar" style="height:${heightPct}%" title="${p.date}: ${p[s.key]}"></div>`;
+    }).join("");
+    return `
+      <div class="chart-card">
+        <h3>${s.label}</h3>
+        <div class="chart-bars">${bars}</div>
+        <div class="chart-totals">
+          <div><b>${total}</b>total (30d)</div>
+          <div><b>${points[points.length - 1] ? points[points.length - 1][s.key] : 0}</b>today</div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 // ============================================================
