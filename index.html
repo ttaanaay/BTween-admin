@@ -423,6 +423,16 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="confirm-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:var(--surface); border: 1px solid var(--border); border-radius:12px; padding:24px; max-width:400px; margin:16px; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+    <p id="confirm-message" style="margin:0 0 20px; font-size:14px; line-height:1.5;"></p>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn-ghost btn-sm" id="confirm-cancel-btn">Cancel</button>
+      <button class="btn-danger btn-sm" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 // Config
@@ -515,6 +525,38 @@ function toast(msg) {
   el.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+/**
+ * In-app replacement for window.confirm(). Browsers permanently suppress native
+ * confirm()/alert() dialogs for a page after the person dismisses one via the "Prevent this
+ * page from creating additional dialogs" option - once that happens every future confirm()
+ * call silently returns false with nothing shown, which looked exactly like "the Ban button
+ * stopped doing anything." This modal is plain DOM/CSS the browser can't suppress that way.
+ */
+function confirmDialog(message) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("confirm-overlay");
+    document.getElementById("confirm-message").textContent = message;
+    overlay.style.display = "flex";
+
+    const cleanup = (result) => {
+      overlay.style.display = "none";
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onOverlayClick);
+      resolve(result);
+    };
+    const okBtn = document.getElementById("confirm-ok-btn");
+    const cancelBtn = document.getElementById("confirm-cancel-btn");
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onOverlayClick = (e) => { if (e.target === overlay) cleanup(false); };
+
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onOverlayClick);
+  });
 }
 
 // ============================================================
@@ -691,7 +733,7 @@ function renderUsers() {
 }
 
 async function toggleBan(id, banned) {
-  if (banned && !confirm("Ban this user? They'll be signed out everywhere and blocked from logging back in.")) return;
+  if (banned && !(await confirmDialog("Ban this user? They'll be signed out everywhere and blocked from logging back in."))) return;
   try {
     await api(`admin/users/${id}/ban`, { method: "PUT", body: JSON.stringify({ banned }) });
     toast(banned ? "User banned" : "User unbanned");
@@ -766,7 +808,7 @@ async function moderateQuote(id, action) {
 }
 
 async function deleteQuote(id) {
-  if (!confirm("Delete this quote permanently?")) return;
+  if (!(await confirmDialog("Delete this quote permanently?"))) return;
   try {
     await api(`admin/quotes/${id}`, { method: "DELETE" });
     toast("Deleted");
@@ -817,7 +859,7 @@ function renderQuoteSearchResults(results) {
 }
 
 async function setQuoteHidden(id, hide) {
-  if (hide && !confirm("Hide this quote from the public feed? The owner keeps it on their profile as hidden, but no one else will see it.")) return;
+  if (hide && !(await confirmDialog("Hide this quote from the public feed? The owner keeps it on their profile as hidden, but no one else will see it."))) return;
   try {
     await api(`admin/quotes/${id}/${hide ? "hide" : "unhide"}`, { method: "POST" });
     toast(hide ? "Quote hidden" : "Quote unhidden");
@@ -906,7 +948,7 @@ async function dismissReport(id) {
   } catch (e) { toast(e.message); }
 }
 async function deleteReportContent(id) {
-  if (!confirm("Delete the reported quote/comment permanently? This also marks the report resolved.")) return;
+  if (!(await confirmDialog("Delete the reported quote/comment permanently? This also marks the report resolved."))) return;
   try {
     await api(`admin/reports/${id}/delete-content`, { method: "POST" });
     toast("Content deleted");
@@ -915,7 +957,7 @@ async function deleteReportContent(id) {
   } catch (e) { toast(e.message); }
 }
 async function banReportTarget(id) {
-  if (!confirm("Ban the account responsible for this? This also marks the report resolved.")) return;
+  if (!(await confirmDialog("Ban the account responsible for this? This also marks the report resolved."))) return;
   try {
     await api(`admin/reports/${id}/ban-target`, { method: "POST" });
     toast("User banned");
@@ -926,7 +968,7 @@ async function banReportTarget(id) {
 
 async function toggleAdmin(id, makeAdmin) {
   const verb = makeAdmin ? "give admin access to" : "remove admin access from";
-  if (!confirm(`Are you sure you want to ${verb} this user?`)) return;
+  if (!(await confirmDialog(`Are you sure you want to ${verb} this user?`))) return;
   try {
     await api(`admin/users/${id}/admin-status`, { method: "PUT", body: JSON.stringify({ isAdmin: makeAdmin }) });
     toast(makeAdmin ? "Now an admin" : "Admin access removed");
@@ -1116,7 +1158,7 @@ async function addCategory() {
 }
 
 async function deleteCategory(id) {
-  if (!confirm("Delete this category? Quotes already using it keep their category text, it just won't show as a filter chip anymore.")) return;
+  if (!(await confirmDialog("Delete this category? Quotes already using it keep their category text, it just won't show as a filter chip anymore."))) return;
   try {
     await api(`admin/categories/${id}`, { method: "DELETE" });
     toast("Category deleted");
@@ -1172,7 +1214,7 @@ async function addSourceType() {
 }
 
 async function deleteSourceType(id) {
-  if (!confirm("Delete this source type? Quotes already using it keep their source type text, it just won't show as a picker option anymore.")) return;
+  if (!(await confirmDialog("Delete this source type? Quotes already using it keep their source type text, it just won't show as a picker option anymore."))) return;
   try {
     await api(`admin/source-types/${id}`, { method: "DELETE" });
     toast("Source type deleted");
