@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BTween — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #121212;
+    --surface: #1B1B1B;
+    --surface-2: #232323;
+    --border: #333029;
+    --text: #F3EFE6;
+    --text-dim: #A79E8E;
+    --accent: #E0A868;
+    --accent-dim: #7A5C34;
+    --danger: #E2685C;
+    --danger-bg: #2C1917;
+    --success: #6FBF8E;
+    --success-bg: #16261C;
+    --warn: #E0C868;
+    --warn-bg: #2A2717;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  h1, h2, h3, .serif { font-family: 'Fraunces', Georgia, serif; }
+
+  /* ---------- Login ---------- */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+  }
+  .brand-mark {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 40px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .brand-mark img { display: block; width: 40px; height: 40px; border-radius: 50%; }
+  .login-card h1 { font-size: 22px; margin: 0 0 4px; font-weight: 500; }
+  .login-card p.sub { color: var(--text-dim); margin: 0 0 28px; font-size: 13px; }
+
+  label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; margin-top: 16px; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #17130B; }
+  .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+  .btn-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-full { width: 100%; margin-top: 24px; padding: 11px; }
+
+  .error-msg {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  /* ---------- App shell ---------- */
+  #app-screen { display: none; min-height: 100vh; }
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; }
+  .sidebar .brand .brand-mark { font-size: 24px; margin: 0; }
+  .sidebar .brand .brand-mark img { width: 24px; height: 24px; }
+  .sidebar .brand span { font-family: 'Fraunces', serif; font-size: 17px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--accent); }
+  .nav-item .badge {
+    margin-left: auto;
+    background: var(--danger);
+    color: #17130B;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 1px 7px;
+    display: none;
+  }
+
+  .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+  .admin-id { font-size: 12px; color: var(--text-dim); padding: 0 8px 10px; word-break: break-all; }
+
+  .main { flex: 1; padding: 32px 40px; max-width: 1100px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-header h1 { font-size: 24px; font-weight: 500; margin: 0; }
+  .page-header p { color: var(--text-dim); font-size: 13px; margin: 4px 0 0; }
+
+  /* ---------- Stats ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 32px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .stat-card .num { font-family: 'Fraunces', serif; font-size: 30px; color: var(--accent); }
+  .stat-card .label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ---------- Tables / cards ---------- */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface-2); }
+  .cell-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pill-warn { background: var(--warn-bg); color: var(--warn); }
+  .pill-danger { background: var(--danger-bg); color: var(--danger); }
+  .pill-success { background: var(--success-bg); color: var(--success); }
+  .pill-neutral { background: var(--surface-2); color: var(--text-dim); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .empty-state .glyph { font-family: 'Fraunces', serif; font-size: 36px; color: var(--border); margin-bottom: 8px; }
+
+  .quote-card { padding: 18px 20px; border-bottom: 1px solid var(--border); }
+  .quote-card:last-child { border-bottom: none; }
+  .quote-card .meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 10px; }
+  .quote-card .owner { font-size: 12px; color: var(--text-dim); }
+  .quote-card .owner b { color: var(--text); }
+  .quote-card .text { font-family: 'Fraunces', serif; font-size: 17px; line-height: 1.45; margin: 8px 0; }
+  .quote-card .source { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+  .quote-card img { max-width: 220px; max-height: 160px; border-radius: 8px; display: block; margin: 10px 0; object-fit: cover; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-row .t-label { font-size: 14px; }
+  .toggle-row .t-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-track { position: absolute; inset: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; transition: 0.15s; }
+  .switch-track::before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: var(--text-dim); border-radius: 50%; transition: 0.15s; }
+  .switch input:checked + .switch-track { background: var(--accent-dim); border-color: var(--accent); }
+  .switch input:checked + .switch-track::before { transform: translateX(18px); background: var(--accent); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .toolbar input[type=text] { flex: 1; max-width: 280px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tab-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); }
+  .tab-btn.active { background: var(--surface-2); color: var(--accent); border-color: var(--accent-dim); }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; transform: translateY(8px);
+    transition: 0.2s; pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .loading { text-align: center; padding: 40px; color: var(--text-dim); font-size: 13px; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; align-items: flex-start; justify-content: center;
+    padding: 40px 20px; overflow-y: auto; z-index: 50;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    width: 100%; max-width: 560px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px;
+  }
+  .modal-box .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .modal-box h2 { font-size: 19px; font-weight: 500; margin: 0 0 4px; }
+  .modal-close { background: transparent; color: var(--text-dim); font-size: 20px; padding: 4px 8px; }
+  .modal-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin: 20px 0 8px; }
+  .modal-list-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .modal-list-item:last-child { border-bottom: none; }
+
+  /* ---------- Analytics ---------- */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .chart-card h3 { font-size: 14px; font-weight: 500; margin: 0 0 16px; color: var(--text-dim); }
+  .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 100px; }
+  .chart-bar { flex: 1; background: var(--accent-dim); border-radius: 2px 2px 0 0; min-height: 2px; position: relative; }
+  .chart-bar:hover { background: var(--accent); }
+  .chart-totals { display: flex; gap: 24px; margin-top: 12px; font-size: 12px; color: var(--text-dim); }
+  .chart-totals b { color: var(--text); font-family: 'Fraunces', serif; font-size: 16px; display: block; }
+
+  @media (max-width: 800px) {
+    .shell { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 12px; align-items: center; }
+    .sidebar .brand { padding: 0 12px 0 4px; }
+    .sidebar-footer { display: none; }
+    .main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="brand-mark"><img src="data:image/png;base64,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" alt="BTween" /></div>
+    <h1>BTween Admin</h1>
+    <p class="sub">Sign in with an administrator account.</p>
+    <form id="login-form">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" required autocomplete="username" />
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" required autocomplete="current-password" />
+      <button type="submit" class="btn-primary btn-full" id="login-submit">Sign in</button>
+    </form>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app-screen">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="data:image/png;base64,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" alt="BTween" /></div>
+        <span>BTween</span>
+      </div>
+      <div class="nav-item active" data-page="dashboard">Dashboard</div>
+      <div class="nav-item" data-page="users">Users</div>
+      <div class="nav-item" data-page="quotes">Pending quotes<span class="badge" id="badge-quotes">0</span></div>
+      <div class="nav-item" data-page="reports">Reports<span class="badge" id="badge-reports">0</span></div>
+      <div class="nav-item" data-page="analytics">Analytics</div>
+      <div class="nav-item" data-page="categories">Categories</div>
+      <div class="nav-item" data-page="sourcetypes">Source Types</div>
+      <div class="nav-item" data-page="settings">Settings</div>
+      <div class="sidebar-footer">
+        <div class="admin-id" id="admin-email"></div>
+        <button class="btn-ghost" style="width:100%" id="logout-btn">Log out</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- Dashboard -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div><h1>Dashboard</h1><p>A quick read on the whole app.</p></div>
+          <button class="btn-ghost btn-sm" onclick="loadStats()">Refresh</button>
+        </div>
+        <div class="stat-grid" id="stat-grid">
+          <div class="loading">Loading stats…</div>
+        </div>
+
+        <div class="page-header" style="margin-top: 32px;">
+          <div><h1 style="font-size: 20px;">Flagged users</h1><p>Users with several reports against them or their quotes - worth a look before it escalates.</p></div>
+        </div>
+        <div class="panel" id="flagged-users-panel"><div class="loading">Loading…</div></div>
+      </div>
+
+      <!-- Users -->
+      <div class="page" id="page-users">
+        <div class="page-header">
+          <div><h1>Users</h1><p>Ban, unlock, or override auto-approve per account.</p></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="user-search" placeholder="Filter by username or email…" oninput="renderUsers()" />
+          <button class="btn-ghost btn-sm" onclick="loadUsers()">Refresh</button>
+        </div>
+        <div class="panel" id="users-panel"><div class="loading">Loading users…</div></div>
+      </div>
+
+      <!-- Pending quotes -->
+      <div class="page" id="page-quotes">
+        <div class="page-header">
+          <div><h1>Pending quotes</h1><p>Review and approve or reject before they reach the public feed.</p></div>
+          <button class="btn-ghost btn-sm" onclick="loadQuotes()">Refresh</button>
+        </div>
+        <div class="panel" id="quotes-panel"><div class="loading">Loading queue…</div></div>
+
+        <div class="page-header" style="margin-top: 32px;">
+          <div><h1 style="font-size: 20px;">Hide a published quote</h1><p>Search text, speaker, or source of any live quote to hide (or unhide) it.</p></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="quote-search-input" placeholder="Search published quotes…" onkeydown="if(event.key==='Enter') searchQuotes()" />
+          <button class="btn-primary btn-sm" onclick="searchQuotes()">Search</button>
+        </div>
+        <div class="panel" id="quote-search-panel"></div>
+      </div>
+
+      <!-- Reports -->
+      <div class="page" id="page-reports">
+        <div class="page-header">
+          <div><h1>Reports</h1><p>User-submitted reports on quotes and profiles.</p></div>
+          <button class="btn-ghost btn-sm" onclick="loadReports()">Refresh</button>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" data-status="PENDING" onclick="switchReportTab('PENDING')">Pending</button>
+          <button class="tab-btn" data-status="RESOLVED" onclick="switchReportTab('RESOLVED')">Resolved</button>
+          <button class="tab-btn" data-status="DISMISSED" onclick="switchReportTab('DISMISSED')">Dismissed</button>
+        </div>
+        <div class="panel" id="reports-panel"><div class="loading">Loading reports…</div></div>
+      </div>
+
+      <!-- Analytics -->
+      <div class="page" id="page-analytics">
+        <div class="page-header">
+          <div><h1>Analytics</h1><p>Daily activity over the last 30 days.</p></div>
+          <button class="btn-ghost btn-sm" onclick="loadAnalytics()">Refresh</button>
+        </div>
+        <div id="analytics-content"><div class="loading">Loading analytics…</div></div>
+      </div>
+
+      <!-- Categories -->
+      <div class="page" id="page-categories">
+        <div class="page-header">
+          <div><h1>Categories</h1><p>Shown as filter chips throughout the app.</p></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="new-category-name" placeholder="New category name…" onkeydown="if(event.key==='Enter') addCategory()" />
+          <button class="btn-primary btn-sm" onclick="addCategory()">Add</button>
+        </div>
+        <div class="panel" id="categories-panel"><div class="loading">Loading categories…</div></div>
+      </div>
+
+      <!-- Source Types -->
+      <div class="page" id="page-sourcetypes">
+        <div class="page-header">
+          <div><h1>Source Types</h1><p>Options shown when someone picks what a quote is from (Movie, Book, etc).</p></div>
+        </div>
+        <div class="toolbar">
+          <input type="text" id="new-sourcetype-name" placeholder="New source type name…" onkeydown="if(event.key==='Enter') addSourceType()" />
+          <button class="btn-primary btn-sm" onclick="addSourceType()">Add</button>
+        </div>
+        <div class="panel" id="sourcetypes-panel"><div class="loading">Loading source types…</div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div><h1>Settings</h1><p>Global defaults for the app.</p></div>
+        </div>
+        <div class="panel">
+          <div class="toggle-row">
+            <div>
+              <div class="t-label">Auto-approve new quotes by default</div>
+              <div class="t-sub">New quotes skip the review queue unless a user is individually overridden below.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="default-auto-approve" onchange="updateDefaultAutoApprove()" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="user-modal-overlay" onclick="if(event.target===this) closeUserDetail()">
+  <div class="modal-box" id="user-modal-box">
+    <div class="loading">Loading…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// Config
+// ============================================================
+const API_BASE = "https://btweenserver.onrender.com/";
+
+// ============================================================
+// State
+// ============================================================
+let accessToken = localStorage.getItem("btw_admin_access") || null;
+let refreshToken = localStorage.getItem("btw_admin_refresh") || null;
+let usersCache = [];
+let quotesCache = [];
+let reportsCache = [];
+let currentReportStatus = "PENDING";
+
+// ============================================================
+// API helper
+// ============================================================
+async function api(path, options = {}) {
+  const doFetch = async (token) => fetch(API_BASE + path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": "Bearer " + token } : {}),
+      ...(options.headers || {})
+    }
+  });
+
+  let res = await doFetch(accessToken);
+
+  if (res.status === 401 && refreshToken) {
+    const refreshed = await tryRefresh();
+    if (refreshed) res = await doFetch(accessToken);
+  }
+
+  if (!res.ok) {
+    let message = "Request failed (" + res.status + ")";
+    try {
+      const body = await res.json();
+      if (body.message) message = body.message;
+    } catch (e) {}
+    throw new Error(message);
+  }
+
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function tryRefresh() {
+  try {
+    const res = await fetch(API_BASE + "auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken })
+    });
+    if (!res.ok) throw new Error("refresh failed");
+    const data = await res.json();
+    setSession(data.accessToken, data.refreshToken);
+    return true;
+  } catch (e) {
+    clearSession();
+    showLogin();
+    return false;
+  }
+}
+
+function setSession(access, refresh) {
+  accessToken = access;
+  refreshToken = refresh;
+  localStorage.setItem("btw_admin_access", access);
+  localStorage.setItem("btw_admin_refresh", refresh);
+}
+
+function clearSession() {
+  accessToken = null;
+  refreshToken = null;
+  localStorage.removeItem("btw_admin_access");
+  localStorage.removeItem("btw_admin_refresh");
+}
+
+// ============================================================
+// Toast
+// ============================================================
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+// ============================================================
+// Login
+// ============================================================
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errorEl = document.getElementById("login-error");
+  const submitBtn = document.getElementById("login-submit");
+  errorEl.style.display = "none";
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing in…";
+
+  try {
+    const res = await fetch(API_BASE + "auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Sign-in failed");
+
+    setSession(data.accessToken, data.refreshToken);
+
+    // Confirm this account is actually an admin by trying an admin-only call.
+    try {
+      await api("admin/stats");
+    } catch (adminErr) {
+      clearSession();
+      throw new Error("This account isn't an administrator.");
+    }
+
+    document.getElementById("admin-email").textContent = email;
+    showApp();
+    loadAll();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.style.display = "block";
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Sign in";
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  try { await api("auth/logout", { method: "POST", body: JSON.stringify({ refreshToken }) }); } catch (e) {}
+  clearSession();
+  showLogin();
+});
+
+function showLogin() {
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("app-screen").style.display = "none";
+}
+function showApp() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-screen").style.display = "block";
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach((i) => i.classList.remove("active"));
+    document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+    item.classList.add("active");
+    document.getElementById("page-" + item.dataset.page).classList.add("active");
+  });
+});
+
+function loadAll() {
+  loadStats();
+  loadUsers();
+  loadQuotes();
+  loadReports();
+  loadSettings();
+  loadAnalytics();
+  loadCategories();
+  loadSourceTypes();
+  loadFlaggedUsers();
+}
+
+// ============================================================
+// Dashboard
+// ============================================================
+async function loadStats() {
+  const grid = document.getElementById("stat-grid");
+  try {
+    const s = await api("admin/stats");
+    grid.innerHTML = `
+      <div class="stat-card"><div class="num">${s.totalUsers}</div><div class="label">Total users</div></div>
+      <div class="stat-card"><div class="num">${s.totalQuotes}</div><div class="label">Total quotes</div></div>
+      <div class="stat-card"><div class="num">${s.pendingQuotes}</div><div class="label">Pending review</div></div>
+      <div class="stat-card"><div class="num">${s.approvedQuotes}</div><div class="label">Approved</div></div>
+      <div class="stat-card"><div class="num">${s.rejectedQuotes}</div><div class="label">Rejected</div></div>
+    `;
+  } catch (e) {
+    grid.innerHTML = `<div class="empty-state">Couldn't load stats — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ============================================================
+// Users
+// ============================================================
+async function loadUsers() {
+  const panel = document.getElementById("users-panel");
+  panel.innerHTML = `<div class="loading">Loading users…</div>`;
+  try {
+    usersCache = await api("admin/users?limit=100");
+    renderUsers();
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load users — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderUsers() {
+  const panel = document.getElementById("users-panel");
+  const query = document.getElementById("user-search").value.trim().toLowerCase();
+  const rows = usersCache.filter(u =>
+    !query || u.username.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+  );
+
+  if (rows.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No users match.</div>`;
+    return;
+  }
+
+  panel.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>User</th><th>Status</th><th>Auto-approve</th><th>Followers</th><th>Joined</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(u => `
+          <tr>
+            <td>
+              <div><b>${escapeHtml(u.displayName)}</b></div>
+              <div style="color:var(--text-dim);font-size:12px">@${escapeHtml(u.username)} · ${escapeHtml(u.email)}</div>
+            </td>
+            <td>
+              ${u.isBanned ? `<span class="pill pill-danger">Banned</span>` : `<span class="pill pill-success">Active</span>`}
+              ${u.isLocked ? `<span class="pill pill-warn" style="margin-left:4px">Locked</span>` : ``}
+              ${u.emailVerified ? `` : `<span class="pill pill-neutral" style="margin-left:4px">Email unverified</span>`}
+              ${u.isAdmin ? `<span class="pill pill-neutral" style="margin-left:4px">Admin</span>` : ``}
+            </td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" ${u.autoApprove ? "checked" : ""} onchange="toggleAutoApprove(${u.id}, this.checked)" />
+                <span class="switch-track"></span>
+              </label>
+            </td>
+            <td>${u.followerCount}</td>
+            <td style="color:var(--text-dim)">${formatDate(u.createdAt)}</td>
+            <td>
+              <div class="cell-actions">
+                <button class="btn-ghost btn-sm" onclick="openUserDetail(${u.id})">View</button>
+                ${u.isBanned
+                  ? `<button class="btn-success btn-sm" onclick="toggleBan(${u.id}, false)">Unban</button>`
+                  : `<button class="btn-danger btn-sm" onclick="toggleBan(${u.id}, true)">Ban</button>`}
+                ${u.isLocked ? `<button class="btn-ghost btn-sm" onclick="unlockUser(${u.id})">Unlock</button>` : ``}
+                ${u.isAdmin
+                  ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Demote</button>`
+                  : `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`}
+              </div>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function toggleBan(id, banned) {
+  if (banned && !confirm("Ban this user? They'll be signed out everywhere and blocked from logging back in.")) return;
+  try {
+    await api(`admin/users/${id}/ban`, { method: "PUT", body: JSON.stringify({ banned }) });
+    toast(banned ? "User banned" : "User unbanned");
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+async function toggleAutoApprove(id, value) {
+  try {
+    await api(`admin/users/${id}/auto-approve`, { method: "PUT", body: JSON.stringify({ autoApprove: value }) });
+    toast("Updated");
+    const u = usersCache.find(u => u.id === id);
+    if (u) u.autoApprove = value;
+  } catch (e) { toast(e.message); loadUsers(); }
+}
+
+async function unlockUser(id) {
+  try {
+    await api(`admin/users/${id}/unlock`, { method: "POST" });
+    toast("Account unlocked");
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// Pending quotes
+// ============================================================
+async function loadQuotes() {
+  const panel = document.getElementById("quotes-panel");
+  panel.innerHTML = `<div class="loading">Loading queue…</div>`;
+  try {
+    quotesCache = await api("admin/quotes/pending?limit=100");
+    document.getElementById("badge-quotes").textContent = quotesCache.length;
+    document.getElementById("badge-quotes").style.display = quotesCache.length > 0 ? "inline-block" : "none";
+    renderQuotes();
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load queue — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderQuotes() {
+  const panel = document.getElementById("quotes-panel");
+  if (quotesCache.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>Nothing waiting for review.</div>`;
+    return;
+  }
+  panel.innerHTML = quotesCache.map(q => `
+    <div class="quote-card">
+      <div class="meta">
+        <div class="owner">by <b>@${escapeHtml(q.ownerUsername)}</b> · ${formatDate(q.createdAt)}</div>
+        <span class="pill pill-neutral">${escapeHtml(q.visibility)}</span>
+      </div>
+      <div class="text">&ldquo;${escapeHtml(q.text)}&rdquo;</div>
+      <div class="source">— ${escapeHtml(q.speaker)}${q.sourceTitle ? ", " + escapeHtml(q.sourceTitle) : ""} (${escapeHtml(q.sourceType)})</div>
+      ${q.imageUrl ? `<img src="${escapeHtml(q.imageUrl)}" alt="" />` : ``}
+      <div class="cell-actions">
+        <button class="btn-success btn-sm" onclick="moderateQuote(${q.id}, 'approve')">Approve</button>
+        <button class="btn-danger btn-sm" onclick="moderateQuote(${q.id}, 'reject')">Reject</button>
+        <button class="btn-ghost btn-sm" onclick="deleteQuote(${q.id})">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function moderateQuote(id, action) {
+  try {
+    await api(`admin/quotes/${id}/${action}`, { method: "POST" });
+    toast(action === "approve" ? "Approved" : "Rejected");
+    loadQuotes();
+    loadStats();
+  } catch (e) { toast(e.message); }
+}
+
+async function deleteQuote(id) {
+  if (!confirm("Delete this quote permanently?")) return;
+  try {
+    await api(`admin/quotes/${id}`, { method: "DELETE" });
+    toast("Deleted");
+    loadQuotes();
+    loadStats();
+  } catch (e) { toast(e.message); }
+}
+
+async function searchQuotes() {
+  const query = document.getElementById("quote-search-input").value.trim();
+  const panel = document.getElementById("quote-search-panel");
+  if (!query) {
+    panel.innerHTML = "";
+    return;
+  }
+  panel.innerHTML = `<div class="loading">Searching…</div>`;
+  try {
+    const results = await api(`admin/quotes/search?q=${encodeURIComponent(query)}`);
+    renderQuoteSearchResults(results);
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't search — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderQuoteSearchResults(results) {
+  const panel = document.getElementById("quote-search-panel");
+  if (results.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No matching published quotes.</div>`;
+    return;
+  }
+  panel.innerHTML = results.map(q => `
+    <div class="quote-card">
+      <div class="meta">
+        <div class="owner">by <b>@${escapeHtml(q.ownerUsername)}</b> · ${formatDate(q.createdAt)}</div>
+        <span class="pill ${q.status === 'HIDDEN' ? 'pill-danger' : 'pill-success'}">${escapeHtml(q.status)}</span>
+      </div>
+      <div class="text">&ldquo;${escapeHtml(q.text)}&rdquo;</div>
+      <div class="source">— ${escapeHtml(q.speaker)}${q.sourceTitle ? ", " + escapeHtml(q.sourceTitle) : ""} (${escapeHtml(q.sourceType)})</div>
+      ${q.imageUrl ? `<img src="${escapeHtml(q.imageUrl)}" alt="" />` : ``}
+      <div class="cell-actions">
+        ${q.status === 'HIDDEN'
+          ? `<button class="btn-success btn-sm" onclick="setQuoteHidden(${q.id}, false)">Unhide</button>`
+          : `<button class="btn-danger btn-sm" onclick="setQuoteHidden(${q.id}, true)">Hide</button>`
+        }
+      </div>
+    </div>
+  `).join("");
+}
+
+async function setQuoteHidden(id, hide) {
+  if (hide && !confirm("Hide this quote from the public feed? The owner keeps it on their profile as hidden, but no one else will see it.")) return;
+  try {
+    await api(`admin/quotes/${id}/${hide ? "hide" : "unhide"}`, { method: "POST" });
+    toast(hide ? "Quote hidden" : "Quote unhidden");
+    searchQuotes();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// Reports
+// ============================================================
+function switchReportTab(status) {
+  currentReportStatus = status;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.status === status));
+  loadReports();
+}
+
+async function loadReports() {
+  const panel = document.getElementById("reports-panel");
+  panel.innerHTML = `<div class="loading">Loading reports…</div>`;
+  try {
+    reportsCache = await api(`admin/reports?status=${currentReportStatus}&limit=100`);
+    const pendingCount = currentReportStatus === "PENDING" ? reportsCache.length : (await api("admin/reports?status=PENDING&limit=100")).length;
+    document.getElementById("badge-reports").textContent = pendingCount;
+    document.getElementById("badge-reports").style.display = pendingCount > 0 ? "inline-block" : "none";
+    renderReports();
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load reports — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderReports() {
+  const panel = document.getElementById("reports-panel");
+  if (reportsCache.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No ${currentReportStatus.toLowerCase()} reports.</div>`;
+    return;
+  }
+  panel.innerHTML = `
+    <table>
+      <thead><tr><th>Target</th><th>Reported content</th><th>Reason</th><th>Reported by</th><th>When</th>${currentReportStatus === "PENDING" ? "<th></th>" : ""}</tr></thead>
+      <tbody>
+        ${reportsCache.map(r => `
+          <tr>
+            <td>
+              <span class="pill pill-neutral">${escapeHtml(r.targetType)}</span>
+              <span style="color:var(--text-dim);margin-left:6px">#${r.targetId}</span>
+            </td>
+            <td style="max-width:220px">
+              ${r.targetPreview
+                ? `<span style="color:var(--text)">${escapeHtml(r.targetPreview)}</span>`
+                : `<span style="color:var(--text-dim);font-style:italic">content deleted</span>`}
+            </td>
+            <td>
+              <div>${escapeHtml(r.reason)}</div>
+              ${r.details ? `<div style="color:var(--text-dim);font-size:12px;margin-top:2px">${escapeHtml(r.details)}</div>` : ``}
+            </td>
+            <td>@${escapeHtml(r.reporterUsername)}</td>
+            <td style="color:var(--text-dim)">${formatDate(r.createdAt)}</td>
+            ${currentReportStatus === "PENDING" ? `
+              <td>
+                <div class="cell-actions">
+                  <button class="btn-ghost btn-sm" onclick="resolveReport(${r.id})">Resolve</button>
+                  ${r.targetType !== "USER" ? `<button class="btn-danger btn-sm" onclick="deleteReportContent(${r.id})">Delete</button>` : ``}
+                  <button class="btn-danger btn-sm" onclick="banReportTarget(${r.id})">Ban</button>
+                  <button class="btn-ghost btn-sm" onclick="dismissReport(${r.id})">Dismiss</button>
+                </div>
+              </td>` : ``}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function resolveReport(id) {
+  try {
+    await api(`admin/reports/${id}/resolve`, { method: "POST" });
+    toast("Marked resolved");
+    loadReports();
+  } catch (e) { toast(e.message); }
+}
+async function dismissReport(id) {
+  try {
+    await api(`admin/reports/${id}/dismiss`, { method: "POST" });
+    toast("Dismissed");
+    loadReports();
+  } catch (e) { toast(e.message); }
+}
+async function deleteReportContent(id) {
+  if (!confirm("Delete the reported quote/comment permanently? This also marks the report resolved.")) return;
+  try {
+    await api(`admin/reports/${id}/delete-content`, { method: "POST" });
+    toast("Content deleted");
+    loadReports();
+    loadStats();
+  } catch (e) { toast(e.message); }
+}
+async function banReportTarget(id) {
+  if (!confirm("Ban the account responsible for this? This also marks the report resolved.")) return;
+  try {
+    await api(`admin/reports/${id}/ban-target`, { method: "POST" });
+    toast("User banned");
+    loadReports();
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+async function toggleAdmin(id, makeAdmin) {
+  const verb = makeAdmin ? "give admin access to" : "remove admin access from";
+  if (!confirm(`Are you sure you want to ${verb} this user?`)) return;
+  try {
+    await api(`admin/users/${id}/admin-status`, { method: "PUT", body: JSON.stringify({ isAdmin: makeAdmin }) });
+    toast(makeAdmin ? "Now an admin" : "Admin access removed");
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// User detail modal
+// ============================================================
+async function openUserDetail(id) {
+  const overlay = document.getElementById("user-modal-overlay");
+  const box = document.getElementById("user-modal-box");
+  box.innerHTML = `<div class="loading">Loading…</div>`;
+  overlay.classList.add("show");
+
+  try {
+    const detail = await api(`admin/users/${id}/detail`);
+    const u = detail.user;
+    box.innerHTML = `
+      <div class="modal-header">
+        <div>
+          <h2>${escapeHtml(u.displayName)}</h2>
+          <div style="color:var(--text-dim);font-size:13px">@${escapeHtml(u.username)} · ${escapeHtml(u.email)}</div>
+        </div>
+        <button class="modal-close" onclick="closeUserDetail()">&times;</button>
+      </div>
+
+      <div class="modal-section-title">Recent quotes (${detail.recentQuotes.length})</div>
+      ${detail.recentQuotes.length === 0
+        ? `<div style="color:var(--text-dim);font-size:13px">No quotes yet.</div>`
+        : detail.recentQuotes.map(q => `
+            <div class="modal-list-item">
+              <span class="pill pill-neutral" style="margin-right:6px">${escapeHtml(q.status)}</span>
+              ${escapeHtml(q.text.length > 90 ? q.text.slice(0, 90) + "…" : q.text)}
+            </div>
+          `).join("")}
+
+      <div class="modal-section-title">Recent comments (${detail.recentComments.length})</div>
+      ${detail.recentComments.length === 0
+        ? `<div style="color:var(--text-dim);font-size:13px">No comments yet.</div>`
+        : detail.recentComments.map(c => `
+            <div class="modal-list-item">${escapeHtml(c.text.length > 90 ? c.text.slice(0, 90) + "…" : c.text)}</div>
+          `).join("")}
+    `;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-state">Couldn't load user — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function closeUserDetail() {
+  document.getElementById("user-modal-overlay").classList.remove("show");
+}
+
+// ============================================================
+// Flagged users
+// ============================================================
+async function loadFlaggedUsers() {
+  const panel = document.getElementById("flagged-users-panel");
+  panel.innerHTML = `<div class="loading">Loading…</div>`;
+  try {
+    const users = await api("admin/flagged-users?minReports=3");
+    renderFlaggedUsers(users);
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load flagged users — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderFlaggedUsers(users) {
+  const panel = document.getElementById("flagged-users-panel");
+  if (users.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No one has 3+ reports against them right now.</div>`;
+    return;
+  }
+  panel.innerHTML = `
+    <table>
+      <thead><tr><th>User</th><th>Reports</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        ${users.map(u => `
+          <tr>
+            <td>${escapeHtml(u.displayName)} <span style="color:var(--text-muted)">@${escapeHtml(u.username)}</span></td>
+            <td><b>${u.reportCount}</b></td>
+            <td>${u.isBanned ? '<span class="pill pill-danger">Banned</span>' : '<span class="pill pill-neutral">Active</span>'}</td>
+            <td>
+              ${u.isBanned
+                ? `<button class="btn-ghost btn-sm" onclick="toggleBan(${u.userId}, false)">Unban</button>`
+                : `<button class="btn-danger btn-sm" onclick="toggleBan(${u.userId}, true)">Ban</button>`
+              }
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+// ============================================================
+// Analytics
+// ============================================================
+async function loadAnalytics() {
+  const el = document.getElementById("analytics-content");
+  el.innerHTML = `<div class="loading">Loading analytics…</div>`;
+  try {
+    const data = await api("admin/analytics?days=30");
+    renderAnalytics(data.points);
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state">Couldn't load analytics — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderAnalytics(points) {
+  const el = document.getElementById("analytics-content");
+  const series = [
+    { key: "activeUsers", label: "Active users (logins)" },
+    { key: "newUsers", label: "New users" },
+    { key: "newQuotes", label: "New quotes" },
+    { key: "newLikes", label: "New likes" },
+    { key: "newComments", label: "New comments" }
+  ];
+
+  el.innerHTML = series.map(s => {
+    const values = points.map(p => p[s.key]);
+    const max = Math.max(1, ...values);
+    const total = values.reduce((a, b) => a + b, 0);
+    const bars = points.map(p => {
+      const heightPct = Math.max(2, Math.round((p[s.key] / max) * 100));
+      return `<div class="chart-bar" style="height:${heightPct}%" title="${p.date}: ${p[s.key]}"></div>`;
+    }).join("");
+    return `
+      <div class="chart-card">
+        <h3>${s.label}</h3>
+        <div class="chart-bars">${bars}</div>
+        <div class="chart-totals">
+          <div><b>${total}</b>total (30d)</div>
+          <div><b>${points[points.length - 1] ? points[points.length - 1][s.key] : 0}</b>today</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// ============================================================
+// Categories
+// ============================================================
+async function loadCategories() {
+  const panel = document.getElementById("categories-panel");
+  panel.innerHTML = `<div class="loading">Loading categories…</div>`;
+  try {
+    const categories = await api("admin/categories");
+    renderCategories(categories);
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load categories — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderCategories(categories) {
+  const panel = document.getElementById("categories-panel");
+  if (categories.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No categories yet - add one above.</div>`;
+    return;
+  }
+  panel.innerHTML = `
+    <table>
+      <thead><tr><th>Name</th><th></th></tr></thead>
+      <tbody>
+        ${categories.map(c => `
+          <tr>
+            <td>${escapeHtml(c.name)}</td>
+            <td><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function addCategory() {
+  const input = document.getElementById("new-category-name");
+  const name = input.value.trim();
+  if (!name) return;
+  try {
+    await api("admin/categories", { method: "POST", body: JSON.stringify({ name }) });
+    input.value = "";
+    toast("Category added");
+    loadCategories();
+  } catch (e) { toast(e.message); }
+}
+
+async function deleteCategory(id) {
+  if (!confirm("Delete this category? Quotes already using it keep their category text, it just won't show as a filter chip anymore.")) return;
+  try {
+    await api(`admin/categories/${id}`, { method: "DELETE" });
+    toast("Category deleted");
+    loadCategories();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// Source Types
+// ============================================================
+async function loadSourceTypes() {
+  const panel = document.getElementById("sourcetypes-panel");
+  panel.innerHTML = `<div class="loading">Loading source types…</div>`;
+  try {
+    const sourceTypes = await api("admin/source-types");
+    renderSourceTypes(sourceTypes);
+  } catch (e) {
+    panel.innerHTML = `<div class="empty-state">Couldn't load source types — ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderSourceTypes(sourceTypes) {
+  const panel = document.getElementById("sourcetypes-panel");
+  if (sourceTypes.length === 0) {
+    panel.innerHTML = `<div class="empty-state"><div class="glyph">&ldquo;</div>No source types yet - add one above.</div>`;
+    return;
+  }
+  panel.innerHTML = `
+    <table>
+      <thead><tr><th>Name</th><th></th></tr></thead>
+      <tbody>
+        ${sourceTypes.map(s => `
+          <tr>
+            <td>${escapeHtml(s.name)}</td>
+            <td><button class="btn-danger btn-sm" onclick="deleteSourceType(${s.id})">Delete</button></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function addSourceType() {
+  const input = document.getElementById("new-sourcetype-name");
+  const name = input.value.trim();
+  if (!name) return;
+  try {
+    await api("admin/source-types", { method: "POST", body: JSON.stringify({ name }) });
+    input.value = "";
+    toast("Source type added");
+    loadSourceTypes();
+  } catch (e) { toast(e.message); }
+}
+
+async function deleteSourceType(id) {
+  if (!confirm("Delete this source type? Quotes already using it keep their source type text, it just won't show as a picker option anymore.")) return;
+  try {
+    await api(`admin/source-types/${id}`, { method: "DELETE" });
+    toast("Source type deleted");
+    loadSourceTypes();
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// Settings
+// ============================================================
+async function loadSettings() {
+  try {
+    const s = await api("admin/settings");
+    document.getElementById("default-auto-approve").checked = s.defaultAutoApprove;
+  } catch (e) { toast(e.message); }
+}
+async function updateDefaultAutoApprove() {
+  const value = document.getElementById("default-auto-approve").checked;
+  try {
+    await api("admin/settings", { method: "PUT", body: JSON.stringify({ defaultAutoApprove: value }) });
+    toast("Settings saved");
+  } catch (e) { toast(e.message); }
+}
+
+// ============================================================
+// Utils
+// ============================================================
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  } catch (e) { return iso; }
+}
+
+// ============================================================
+// Boot
+// ============================================================
+(async function boot() {
+  if (accessToken) {
+    try {
+      await api("admin/stats");
+      document.getElementById("admin-email").textContent = "Signed in";
+      showApp();
+      loadAll();
+      return;
+    } catch (e) {
+      clearSession();
+    }
+  }
+  showLogin();
+})();
+</script>
+</body>
+</html>
