@@ -375,8 +375,27 @@
           <div><h1>Categories</h1><p>Shown as filter chips throughout the app.</p></div>
         </div>
         <div class="toolbar">
+          <input type="text" id="new-category-icon" placeholder="🏷️" maxlength="4" style="width:56px; text-align:center; flex:none;" onkeydown="if(event.key==='Enter') addCategory()" />
           <input type="text" id="new-category-name" placeholder="New category name…" onkeydown="if(event.key==='Enter') addCategory()" />
           <button class="btn-primary btn-sm" onclick="addCategory()">Add</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin: 4px 0 16px;">
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌱'">🌱</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='❤️'">❤️</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🔥'">🔥</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🏆'">🏆</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🧠'">🧠</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='😂'">😂</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='📚'">📚</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🎬'">🎬</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='✨'">✨</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌙'">🌙</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='☕'">☕</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🎵'">🎵</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='💪'">💪</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🕊️'">🕊️</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌊'">🌊</button>
+          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='⭐'">⭐</button>
         </div>
         <div class="panel" id="categories-panel"><div class="loading">Loading categories…</div></div>
       </div>
@@ -1132,10 +1151,11 @@ function renderCategories(categories) {
   }
   panel.innerHTML = `
     <table>
-      <thead><tr><th>Name</th><th></th></tr></thead>
+      <thead><tr><th></th><th>Name</th><th></th></tr></thead>
       <tbody>
         ${categories.map(c => `
           <tr>
+            <td style="font-size:18px;">${escapeHtml(c.icon || '🏷️')}</td>
             <td>${escapeHtml(c.name)}</td>
             <td><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button></td>
           </tr>
@@ -1146,12 +1166,15 @@ function renderCategories(categories) {
 }
 
 async function addCategory() {
-  const input = document.getElementById("new-category-name");
-  const name = input.value.trim();
+  const nameInput = document.getElementById("new-category-name");
+  const iconInput = document.getElementById("new-category-icon");
+  const name = nameInput.value.trim();
+  const icon = iconInput.value.trim();
   if (!name) return;
   try {
-    await api("admin/categories", { method: "POST", body: JSON.stringify({ name }) });
-    input.value = "";
+    await api("admin/categories", { method: "POST", body: JSON.stringify({ name, icon: icon || undefined }) });
+    nameInput.value = "";
+    iconInput.value = "";
     toast("Category added");
     loadCategories();
   } catch (e) { toast(e.message); }
