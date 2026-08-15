@@ -6,6 +6,18 @@
 <title>BTween — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<style>
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+  }
+</style>
 <style>
   :root {
     --bg: #121212;
@@ -375,28 +387,15 @@
           <div><h1>Categories</h1><p>Shown as filter chips throughout the app.</p></div>
         </div>
         <div class="toolbar">
-          <input type="text" id="new-category-icon" placeholder="🏷️" maxlength="4" style="width:56px; text-align:center; flex:none;" onkeydown="if(event.key==='Enter') addCategory()" />
-          <input type="text" id="new-category-name" placeholder="New category name…" onkeydown="if(event.key==='Enter') addCategory()" />
-          <button class="btn-primary btn-sm" onclick="addCategory()">Add</button>
+          <div id="new-category-icon-preview" style="width:40px; height:40px; border-radius:8px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; flex:none;">
+            <span class="material-symbols-outlined">label</span>
+          </div>
+          <input type="hidden" id="new-category-icon" value="label" />
+          <input type="text" id="new-category-name" placeholder="New category name…" onkeydown="if(event.key==='Enter') saveCategory()" />
+          <button class="btn-primary btn-sm" id="category-form-submit-btn" onclick="saveCategory()">Add</button>
+          <button class="btn-ghost btn-sm" id="category-cancel-edit-btn" style="display:none;" onclick="cancelEditCategory()">Cancel</button>
         </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin: 4px 0 16px;">
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌱'">🌱</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='❤️'">❤️</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🔥'">🔥</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🏆'">🏆</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🧠'">🧠</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='😂'">😂</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='📚'">📚</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🎬'">🎬</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='✨'">✨</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌙'">🌙</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='☕'">☕</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🎵'">🎵</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='💪'">💪</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🕊️'">🕊️</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='🌊'">🌊</button>
-          <button type="button" class="btn-ghost btn-sm" style="padding:6px 10px; font-size:16px;" onclick="document.getElementById('new-category-icon').value='⭐'">⭐</button>
-        </div>
+        <div id="category-icon-picker" style="display:flex; gap:6px; flex-wrap:wrap; margin: 4px 0 16px;"></div>
         <div class="panel" id="categories-panel"><div class="loading">Loading categories…</div></div>
       </div>
 
@@ -659,6 +658,7 @@ function loadAll() {
   loadCategories();
   loadSourceTypes();
   loadFlaggedUsers();
+  renderCategoryIconPicker();
 }
 
 // ============================================================
@@ -1143,6 +1143,55 @@ async function loadCategories() {
   }
 }
 
+// Must match IconCatalog.KEYS on the server and the icon maps in the Android/web apps -
+// these are Material Symbols ligature names, which happen to line up with Android's actual
+// Material Icon names too (e.g. "wb_sunny" <-> Icons.Filled.WbSunny).
+const ICON_CATALOG = {
+  sun: "wb_sunny", heart: "favorite", star: "star", groups: "groups",
+  brain: "psychology", laugh: "emoji_emotions", book: "menu_book", movie: "movie",
+  music: "music_note", coffee: "local_cafe", moon: "bedtime", trophy: "emoji_events",
+  flame: "local_fire_department", leaf: "eco", compass: "explore", sparkle: "auto_awesome"
+};
+const ICON_FALLBACK = "label";
+
+function iconLigature(key) {
+  return ICON_CATALOG[key] || ICON_FALLBACK;
+}
+
+let editingCategoryId = null;
+
+function renderCategoryIconPicker() {
+  const picker = document.getElementById("category-icon-picker");
+  picker.innerHTML = Object.keys(ICON_CATALOG).map(key => `
+    <button type="button" class="btn-ghost btn-sm" style="padding:8px; min-width:36px;" onclick="selectCategoryIcon('${key}')" title="${key}">
+      <span class="material-symbols-outlined">${ICON_CATALOG[key]}</span>
+    </button>
+  `).join("");
+}
+
+function selectCategoryIcon(key) {
+  document.getElementById("new-category-icon").value = key;
+  document.getElementById("new-category-icon-preview").innerHTML =
+    `<span class="material-symbols-outlined">${iconLigature(key)}</span>`;
+}
+
+function editCategory(id, name, icon) {
+  editingCategoryId = id;
+  document.getElementById("new-category-name").value = name;
+  selectCategoryIcon(icon);
+  document.getElementById("category-form-submit-btn").textContent = "Save changes";
+  document.getElementById("category-cancel-edit-btn").style.display = "inline-flex";
+  document.getElementById("new-category-name").focus();
+}
+
+function cancelEditCategory() {
+  editingCategoryId = null;
+  document.getElementById("new-category-name").value = "";
+  selectCategoryIcon("label");
+  document.getElementById("category-form-submit-btn").textContent = "Add";
+  document.getElementById("category-cancel-edit-btn").style.display = "none";
+}
+
 function renderCategories(categories) {
   const panel = document.getElementById("categories-panel");
   if (categories.length === 0) {
@@ -1155,9 +1204,12 @@ function renderCategories(categories) {
       <tbody>
         ${categories.map(c => `
           <tr>
-            <td style="font-size:18px;">${escapeHtml(c.icon || '🏷️')}</td>
+            <td><span class="material-symbols-outlined">${iconLigature(c.icon)}</span></td>
             <td>${escapeHtml(c.name)}</td>
-            <td><button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button></td>
+            <td style="display:flex; gap:6px; justify-content:flex-end;">
+              <button class="btn-ghost btn-sm" onclick="editCategory(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}', '${c.icon}')">Edit</button>
+              <button class="btn-danger btn-sm" onclick="deleteCategory(${c.id})">Delete</button>
+            </td>
           </tr>
         `).join("")}
       </tbody>
@@ -1165,17 +1217,21 @@ function renderCategories(categories) {
   `;
 }
 
-async function addCategory() {
+async function saveCategory() {
   const nameInput = document.getElementById("new-category-name");
   const iconInput = document.getElementById("new-category-icon");
   const name = nameInput.value.trim();
-  const icon = iconInput.value.trim();
+  const icon = iconInput.value || "label";
   if (!name) return;
   try {
-    await api("admin/categories", { method: "POST", body: JSON.stringify({ name, icon: icon || undefined }) });
-    nameInput.value = "";
-    iconInput.value = "";
-    toast("Category added");
+    if (editingCategoryId) {
+      await api(`admin/categories/${editingCategoryId}`, { method: "PUT", body: JSON.stringify({ name, icon }) });
+      toast("Category updated");
+    } else {
+      await api("admin/categories", { method: "POST", body: JSON.stringify({ name, icon }) });
+      toast("Category added");
+    }
+    cancelEditCategory();
     loadCategories();
   } catch (e) { toast(e.message); }
 }
@@ -1184,6 +1240,7 @@ async function deleteCategory(id) {
   if (!(await confirmDialog("Delete this category? Quotes already using it keep their category text, it just won't show as a filter chip anymore."))) return;
   try {
     await api(`admin/categories/${id}`, { method: "DELETE" });
+    if (editingCategoryId === id) cancelEditCategory();
     toast("Category deleted");
     loadCategories();
   } catch (e) { toast(e.message); }
