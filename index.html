@@ -761,13 +761,15 @@ function renderUsers() {
                   ? `<button class="btn-success btn-sm" onclick="toggleBan(${u.id}, false)">Unban</button>`
                   : `<button class="btn-danger btn-sm" onclick="toggleBan(${u.id}, true)">Ban</button>`}
                 ${u.isLocked ? `<button class="btn-ghost btn-sm" onclick="unlockUser(${u.id})">Unlock</button>` : ``}
-                ${!u.isAdmin
-                  ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`
-                  : u.isSuperAdmin
-                    ? `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, false)">Demote to moderator</button>
-                       <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`
-                    : `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, true)">Make super admin</button>
-                       <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`}
+                ${currentAdmin?.isSuperAdmin ? (
+                  !u.isAdmin
+                    ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`
+                    : u.isSuperAdmin
+                      ? `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, false)">Demote to moderator</button>
+                         <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`
+                      : `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, true)">Make super admin</button>
+                         <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`
+                ) : ``}
               </div>
             </td>
           </tr>
