@@ -428,6 +428,25 @@
             </label>
           </div>
         </div>
+
+        <div class="page-header" style="margin-top: 32px;">
+          <div><h1 style="font-size: 20px;">Maintenance mode</h1><p>Shows a full-screen "under maintenance" notice on the web app and in Android instead of the normal app - the API itself keeps running, so this panel is never blocked.</p></div>
+        </div>
+        <div class="panel">
+          <div class="toggle-row">
+            <div>
+              <div class="t-label" id="maintenance-status-label">Maintenance mode is off</div>
+              <div class="t-sub">Turn on before doing risky changes, then off again when done.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="maintenance-toggle" onchange="updateMaintenanceMode()" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+          <div style="padding: 0 20px 20px;">
+            <textarea id="maintenance-message" placeholder="Message shown to users (optional) — e.g. 'Back in 30 minutes, thanks for your patience!'" rows="2" style="width:100%; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px; color:var(--text); font-family:inherit; font-size:13px; resize:vertical;" onblur="updateMaintenanceMessage()"></textarea>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1313,6 +1332,9 @@ async function loadSettings() {
   try {
     const s = await api("admin/settings");
     document.getElementById("default-auto-approve").checked = s.defaultAutoApprove;
+    document.getElementById("maintenance-toggle").checked = s.maintenanceMode;
+    document.getElementById("maintenance-message").value = s.maintenanceMessage || "";
+    updateMaintenanceStatusLabel(s.maintenanceMode);
   } catch (e) { toast(e.message); }
 }
 async function updateDefaultAutoApprove() {
@@ -1320,6 +1342,32 @@ async function updateDefaultAutoApprove() {
   try {
     await api("admin/settings", { method: "PUT", body: JSON.stringify({ defaultAutoApprove: value }) });
     toast("Settings saved");
+  } catch (e) { toast(e.message); }
+}
+
+function updateMaintenanceStatusLabel(enabled) {
+  document.getElementById("maintenance-status-label").textContent =
+    enabled ? "Maintenance mode is ON" : "Maintenance mode is off";
+}
+
+async function updateMaintenanceMode() {
+  const enabled = document.getElementById("maintenance-toggle").checked;
+  const message = document.getElementById("maintenance-message").value;
+  try {
+    await api("admin/maintenance", { method: "PUT", body: JSON.stringify({ enabled, message }) });
+    updateMaintenanceStatusLabel(enabled);
+    toast(enabled ? "Maintenance mode turned on" : "Maintenance mode turned off");
+  } catch (e) {
+    document.getElementById("maintenance-toggle").checked = !enabled;
+    toast(e.message);
+  }
+}
+
+async function updateMaintenanceMessage() {
+  const enabled = document.getElementById("maintenance-toggle").checked;
+  const message = document.getElementById("maintenance-message").value;
+  try {
+    await api("admin/maintenance", { method: "PUT", body: JSON.stringify({ enabled, message }) });
   } catch (e) { toast(e.message); }
 }
 
