@@ -191,6 +191,7 @@
   .pill-danger { background: var(--danger-bg); color: var(--danger); }
   .pill-success { background: var(--success-bg); color: var(--success); }
   .pill-neutral { background: var(--surface-2); color: var(--text-dim); }
+  .pill-accent { background: rgba(224,168,104,0.15); color: var(--accent); }
 
   .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
   .empty-state .glyph { font-family: 'Fraunces', serif; font-size: 36px; color: var(--border); margin-bottom: 8px; }
@@ -302,9 +303,9 @@
       <div class="nav-item" data-page="quotes">Pending quotes<span class="badge" id="badge-quotes">0</span></div>
       <div class="nav-item" data-page="reports">Reports<span class="badge" id="badge-reports">0</span></div>
       <div class="nav-item" data-page="analytics">Analytics</div>
-      <div class="nav-item" data-page="categories">Categories</div>
-      <div class="nav-item" data-page="sourcetypes">Source Types</div>
-      <div class="nav-item" data-page="settings">Settings</div>
+      <div class="nav-item" data-page="categories" id="nav-categories">Categories</div>
+      <div class="nav-item" data-page="sourcetypes" id="nav-sourcetypes">Source Types</div>
+      <div class="nav-item" data-page="settings" id="nav-settings">Settings</div>
       <div class="sidebar-footer">
         <div class="admin-id" id="admin-email"></div>
         <button class="btn-ghost" style="width:100%" id="logout-btn">Log out</button>
@@ -741,7 +742,9 @@ function renderUsers() {
               ${u.isBanned ? `<span class="pill pill-danger">Banned</span>` : `<span class="pill pill-success">Active</span>`}
               ${u.isLocked ? `<span class="pill pill-warn" style="margin-left:4px">Locked</span>` : ``}
               ${u.emailVerified ? `` : `<span class="pill pill-neutral" style="margin-left:4px">Email unverified</span>`}
-              ${u.isAdmin ? `<span class="pill pill-neutral" style="margin-left:4px">Admin</span>` : ``}
+              ${u.isSuperAdmin
+                ? `<span class="pill pill-accent" style="margin-left:4px">Super Admin</span>`
+                : u.isAdmin ? `<span class="pill pill-neutral" style="margin-left:4px">Admin</span>` : ``}
             </td>
             <td>
               <label class="switch">
@@ -758,9 +761,13 @@ function renderUsers() {
                   ? `<button class="btn-success btn-sm" onclick="toggleBan(${u.id}, false)">Unban</button>`
                   : `<button class="btn-danger btn-sm" onclick="toggleBan(${u.id}, true)">Ban</button>`}
                 ${u.isLocked ? `<button class="btn-ghost btn-sm" onclick="unlockUser(${u.id})">Unlock</button>` : ``}
-                ${u.isAdmin
-                  ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Demote</button>`
-                  : `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`}
+                ${!u.isAdmin
+                  ? `<button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, true)">Make admin</button>`
+                  : u.isSuperAdmin
+                    ? `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, false)">Demote to moderator</button>
+                       <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`
+                    : `<button class="btn-ghost btn-sm" onclick="toggleSuperAdmin(${u.id}, true)">Make super admin</button>
+                       <button class="btn-ghost btn-sm" onclick="toggleAdmin(${u.id}, false)">Remove admin</button>`}
               </div>
             </td>
           </tr>
@@ -1005,11 +1012,23 @@ async function banReportTarget(id) {
 }
 
 async function toggleAdmin(id, makeAdmin) {
-  const verb = makeAdmin ? "give admin access to" : "remove admin access from";
+  const verb = makeAdmin ? "give admin access to" : "remove admin access from (this also removes super admin access, if any)";
   if (!(await confirmDialog(`Are you sure you want to ${verb} this user?`))) return;
   try {
     await api(`admin/users/${id}/admin-status`, { method: "PUT", body: JSON.stringify({ isAdmin: makeAdmin }) });
     toast(makeAdmin ? "Now an admin" : "Admin access removed");
+    loadUsers();
+  } catch (e) { toast(e.message); }
+}
+
+async function toggleSuperAdmin(id, makeSuperAdmin) {
+  const verb = makeSuperAdmin
+    ? "promote this user to super admin? They'll be able to manage categories, source types, settings, maintenance mode, and other admins"
+    : "demote this user to moderator? They keep regular admin access but lose the ability to manage structural settings and other admins";
+  if (!(await confirmDialog(`Are you sure you want to ${verb}`))) return;
+  try {
+    await api(`admin/users/${id}/super-admin-status`, { method: "PUT", body: JSON.stringify({ isSuperAdmin: makeSuperAdmin }) });
+    toast(makeSuperAdmin ? "Now a super admin" : "Demoted to moderator");
     loadUsers();
   } catch (e) { toast(e.message); }
 }
@@ -1386,14 +1405,25 @@ function formatDate(iso) {
   } catch (e) { return iso; }
 }
 
+let currentAdmin = null;
+
+function applyRoleVisibility() {
+  const isSuperAdmin = currentAdmin?.isSuperAdmin === true;
+  ["nav-categories", "nav-sourcetypes", "nav-settings"].forEach(id => {
+    document.getElementById(id).style.display = isSuperAdmin ? "" : "none";
+  });
+}
+
 // ============================================================
 // Boot
 // ============================================================
 (async function boot() {
   if (accessToken) {
     try {
-      await api("admin/stats");
-      document.getElementById("admin-email").textContent = "Signed in";
+      currentAdmin = await api("admin/me");
+      document.getElementById("admin-email").textContent =
+        currentAdmin.isSuperAdmin ? "Super Admin" : "Moderator";
+      applyRoleVisibility();
       showApp();
       loadAll();
       return;
